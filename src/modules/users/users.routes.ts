@@ -10,6 +10,6 @@ const router = Router();
 
 // 🧑‍⚕️ Create Staff (Pastor only)
 router.post("/", authMiddleware, validate(createStaffSchema), createStaffHandler);
-router.get("/", authMiddleware, authorizeRoles("STAFF"), getStaffHandler);
+router.get("/", authMiddleware, authorizeRoles("STAFF", "LEAD_PASTOR"), getStaffHandler);
 
 export default router;

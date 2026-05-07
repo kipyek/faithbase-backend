@@ -43,7 +43,8 @@ model User {
   churchId String?
   church   Church? @relation(fields: [churchId], references: [id])
 
-  createdAt DateTime @default(now())
+  createdAt DateTime   @default(now())
+  auditLogs AuditLog[]
 }
 
 model Member {
@@ -54,6 +55,21 @@ model Member {
 
   churchId String
   church   Church @relation(fields: [churchId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id String @id @default(uuid())
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  action   String
+  entity   String
+  entityId String?
+
+  metadata Json?
 
   createdAt DateTime @default(now())
 }
