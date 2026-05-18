@@ -1,51 +1,61 @@
-import { Request, Response } from "express";
-import { prisma } from "../database/prisma/client.js";
+import { Request, Response, NextFunction } from "express";
+import { validateC2BService, confirmC2BService } from "../modules/mpesa/mpesa.service.js";
 
 /**
  * Controller: Handles Safaricom C2B Validation Webhook
  */
-export const validateC2B = (req: Request, res: Response): any => {
-    console.log('--- Received C2B Validation Request ---');
-    console.log(JSON.stringify(req.body, null, 2));
+export const validateC2B = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  console.log('--- Received C2B Validation Request ---');
+  console.log(JSON.stringify(req.body, null, 2));
 
-    // Perform standard account/bill reference validation
-    const isValid = true;
+  try {
+    const { BillRefNumber, MSISDN } = req.body;
 
-    if (isValid) {
-        console.log('✅ Validation Successful: Transaction accepted');
-        return res.status(200).json({
-            ResultCode: 0,
-            ResultDesc: 'Accepted'
-        });
+    const result = await validateC2BService(BillRefNumber, MSISDN);
+
+    if (result.isValid) {
+      console.log(`✅ Validation Successful: ${result.resultDesc}`);
+      return res.status(200).json({
+        ResultCode: 0,
+        ResultDesc: 'Accepted'
+      });
     } else {
-        console.log('❌ Validation Failed: Transaction rejected');
-        return res.status(200).json({
-            ResultCode: 1,
-            ResultDesc: 'Rejected'
-        });
+      console.log(`❌ Validation Failed: ${result.resultDesc}`);
+      return res.status(200).json({
+        ResultCode: 1,
+        ResultDesc: result.resultDesc
+      });
     }
+  } catch (error) {
+    console.error('Error in validation controller:', error);
+    // On internal error, fallback to Accept so that the transaction is processed and not lost
+    return res.status(200).json({
+      ResultCode: 0,
+      ResultDesc: 'Accepted on fallback'
+    });
+  }
 };
 
 /**
  * Controller: Handles Safaricom C2B Confirmation Webhook
  */
-export const confirmC2B = async (req: Request, res: Response): Promise<any> => {
-    console.log('--- Received C2B Confirmation ---');
-    console.log(JSON.stringify(req.body, null, 2));
+export const confirmC2B = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  console.log('--- Received C2B Confirmation ---');
+  console.log(JSON.stringify(req.body, null, 2));
 
-    try {
-        const {
-            TransID,
-            TransAmount,
-            MSISDN,
-            BillRefNumber,
-            TransTime,
-            FirstName,
-            MiddleName,
-            LastName
-        } = req.body;
+  try {
+    const {
+      TransID,
+      TransAmount,
+      MSISDN,
+      BillRefNumber,
+      TransTime,
+      FirstName,
+      MiddleName,
+      LastName
+    } = req.body;
 
-        console.log(`✅ C2B PAYMENT CONFIRMED:
+    console.log(`✅ C2B PAYMENT CONFIRMED:
       Transaction ID: ${TransID}
       Amount: KES ${TransAmount}
       From (Phone): ${MSISDN}
@@ -54,52 +64,43 @@ export const confirmC2B = async (req: Request, res: Response): Promise<any> => {
       Date: ${TransTime}
     `);
 
-        if (!TransID) {
-            return res.status(400).json({
-                ResultCode: 1,
-                ResultDesc: 'Invalid request: TransID is missing'
-            });
-        }
-
-        // Check if the transaction has already been saved to prevent duplicates on Safaricom retries
-        const existingPayment = await prisma.mpesaPayment.findUnique({
-            where: { transId: TransID }
-        });
-
-        if (existingPayment) {
-            console.log(`ℹ️ C2B payment ${TransID} already exists in database. Skipping duplicate save.`);
-            return res.status(200).json({
-                ResultCode: 0,
-                ResultDesc: 'Confirmation received successfully (duplicate)'
-            });
-        }
-
-        // Save confirmation data in the database using Prisma
-        await prisma.mpesaPayment.create({
-            data: {
-                transId: TransID,
-                transAmount: String(TransAmount),
-                msisdn: String(MSISDN),
-                billRefNumber: String(BillRefNumber),
-                transTime: String(TransTime),
-                firstName: FirstName || null,
-                middleName: MiddleName || null,
-                lastName: LastName || null,
-                rawCallback: req.body
-            }
-        });
-
-        console.log(`💾 C2B payment successfully saved to database: ${TransID}`);
-
-        return res.status(200).json({
-            ResultCode: 0,
-            ResultDesc: 'Confirmation received successfully'
-        });
-    } catch (error) {
-        console.error('Error processing C2B confirmation:', error);
-        return res.status(500).json({
-            ResultCode: 1,
-            ResultDesc: 'Internal server error processing confirmation'
-        });
+    if (!TransID) {
+      return res.status(400).json({
+        ResultCode: 1,
+        ResultDesc: 'Invalid request: TransID is missing'
+      });
     }
+
+    const result = await confirmC2BService({
+      transId: TransID,
+      transAmount: TransAmount,
+      msisdn: MSISDN,
+      billRefNumber: BillRefNumber,
+      transTime: TransTime,
+      firstName: FirstName,
+      middleName: MiddleName,
+      lastName: LastName
+    });
+
+    if (result.status === 'duplicate') {
+      console.log(`ℹ️ C2B payment ${TransID} already exists. Skipping duplicate save.`);
+      return res.status(200).json({
+        ResultCode: 0,
+        ResultDesc: 'Confirmation received successfully (duplicate)'
+      });
+    }
+
+    console.log(`💾 C2B payment successfully saved to database: ${TransID}`);
+
+    return res.status(200).json({
+      ResultCode: 0,
+      ResultDesc: 'Confirmation received successfully'
+    });
+  } catch (error) {
+    console.error('Error in confirmation controller:', error);
+    return res.status(200).json({
+      ResultCode: 1,
+      ResultDesc: 'Internal server error processing confirmation'
+    });
+  }
 };
