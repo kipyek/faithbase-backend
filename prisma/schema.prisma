@@ -84,6 +84,5 @@ model MpesaPayment {
   firstName     String?
   middleName    String?
   lastName      String?
-  rawCallback   Json?
   createdAt     DateTime @default(now())
 }

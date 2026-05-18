@@ -16,7 +16,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/churches", churchRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/logs", logRoutes);
-app.use("/api/mpesa", mpesaRoutes);
+app.use("/api", mpesaRoutes);
 app.get("/", (req, res) => {
     res.send("FaithBase API 🚀");
 });
