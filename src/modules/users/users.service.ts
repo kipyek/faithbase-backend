@@ -1,6 +1,9 @@
 import bcrypt from "bcrypt";
-import { Role } from "@prisma/client";
+import pkg from "@prisma/client";
+import type { Role as PrismaRole } from "@prisma/client";
 import { prisma } from "../../database/prisma/client.js";
+
+const { Role } = pkg as { Role: typeof PrismaRole };
 import { logAction } from "../../common/utils/audit.js";
 
 export const createStaff = async (user: any, data: any) => {

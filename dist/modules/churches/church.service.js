@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
-import { Role, ChurchType } from "@prisma/client";
+import pkg from "@prisma/client";
 import { prisma } from "../../database/prisma/client.js";
+const { Role, ChurchType } = pkg;
 export const createChurch = async (user, data) => {
     let { name, email, type, parentId, pastorEmail, pastorPassword } = data;
     let parentChurch = null;

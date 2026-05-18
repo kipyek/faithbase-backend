@@ -1,6 +1,9 @@
-import { Role } from "@prisma/client";
+import pkg from "@prisma/client";
+import type { Role as PrismaRole } from "@prisma/client";
 import { prisma } from "../../database/prisma/client.js";
 import { getPagination } from "../../common/utils/pagination.js";
+
+const { Role } = pkg as { Role: typeof PrismaRole };
 
 export const getStaff = async (user: any, query: any) => {
   const { page, limit } = getPagination(query);

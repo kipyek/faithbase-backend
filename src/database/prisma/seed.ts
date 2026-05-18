@@ -1,6 +1,9 @@
-import { Role } from "@prisma/client";
+import pkg from "@prisma/client";
+import type { Role as PrismaRole } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { prisma } from "./client.js";
+
+const { Role } = pkg as { Role: typeof PrismaRole };
 
 
 async function main() {

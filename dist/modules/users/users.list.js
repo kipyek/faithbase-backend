@@ -1,6 +1,7 @@
-import { Role } from "@prisma/client";
+import pkg from "@prisma/client";
 import { prisma } from "../../database/prisma/client.js";
 import { getPagination } from "../../common/utils/pagination.js";
+const { Role } = pkg;
 export const getStaff = async (user, query) => {
     const { page, limit } = getPagination(query);
     const skip = (page - 1) * limit;

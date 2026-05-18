@@ -1,6 +1,7 @@
-import { Role } from "@prisma/client";
+import pkg from "@prisma/client";
 import bcrypt from "bcrypt";
 import { prisma } from "./client.js";
+const { Role } = pkg;
 async function main() {
     const existing = await prisma.user.findFirst({
         where: { role: Role.SUPER_ADMIN }
