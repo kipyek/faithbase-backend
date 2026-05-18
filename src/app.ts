@@ -6,6 +6,7 @@ import authRoutes from "./modules/auth/auth.routes.js";
 import churchRoutes from "./modules/churches/church.routes.js";
 import userRoutes from "./modules/users/users.routes.js";
 import logRoutes from "./modules/logs/logs.route.js";
+import mpesaRoutes from "./modules/mpesa/mpesa.routes.js";
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/churches", churchRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/logs", logRoutes);
+app.use("/api/mpesa", mpesaRoutes);
 app.get("/", (req, res) => {
     res.send("FaithBase API 🚀");
 });

@@ -73,3 +73,17 @@ model AuditLog {
 
   createdAt DateTime @default(now())
 }
+
+model MpesaPayment {
+  id            String   @id @default(uuid())
+  transId       String   @unique
+  transAmount   String
+  msisdn        String
+  billRefNumber String
+  transTime     String
+  firstName     String?
+  middleName    String?
+  lastName      String?
+  rawCallback   Json?
+  createdAt     DateTime @default(now())
+}
